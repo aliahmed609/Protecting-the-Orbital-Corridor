@@ -59,11 +59,6 @@ public class Breach : MonoBehaviour, IPoolable
     {
         if (transform.position.y <= bottomLimit)
         {
-            if (roundManager != null)
-            {
-                roundManager.LoseRound();
-            }
-
             ReturnToPool();
         }
     }
@@ -145,6 +140,18 @@ public class Breach : MonoBehaviour, IPoolable
 
             ReturnToPool();
         }
+    }
+
+    // ==================================================
+    // BOTTOM ZONE
+    // ==================================================
+
+    public void ReturnToPoolFromBottom()
+    {
+        if (isReturning)
+            return;
+
+        ReturnToPool();
     }
 
     // ==================================================

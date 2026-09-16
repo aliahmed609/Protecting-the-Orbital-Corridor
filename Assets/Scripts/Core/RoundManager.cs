@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RoundManager : MonoBehaviour
 {
@@ -25,12 +27,17 @@ public class RoundManager : MonoBehaviour
     [Header("Flux Warning")]
     [SerializeField] private float warningTime = 3f;
 
+    [Header("Role Swap UI")]
+    [SerializeField] private RawImage roleSwappedImage;
+    [SerializeField] private float roleSwappedDisplayDuration = 1f;
+
     private int alertWarningStep;
     private int criticalWarningStep;
 
     public System.Action<string> OnFluxWarning;
     public System.Action OnRoundWon;
     public System.Action OnRoundLost;
+
     private float currentTime;
     private GamePhase currentPhase;
 
@@ -46,6 +53,11 @@ public class RoundManager : MonoBehaviour
 
     private void Start()
     {
+        if (roleSwappedImage != null)
+        {
+            roleSwappedImage.gameObject.SetActive(false);
+        }
+
         StartRound();
     }
 
@@ -77,11 +89,13 @@ public class RoundManager : MonoBehaviour
 
     private void CheckPhaseTransition()
     {
-        if (currentPhase == GamePhase.Patrol && currentTime >= alertTime)
+        if (currentPhase == GamePhase.Patrol &&
+            currentTime >= alertTime)
         {
             EnterPhase(GamePhase.Alert);
         }
-        else if (currentPhase == GamePhase.Alert && currentTime >= criticalTime)
+        else if (currentPhase == GamePhase.Alert &&
+                 currentTime >= criticalTime)
         {
             EnterPhase(GamePhase.Critical);
         }
@@ -89,26 +103,89 @@ public class RoundManager : MonoBehaviour
 
     private void EnterPhase(GamePhase newPhase)
     {
-        currentPhase = newPhase;
+        // ==================================================
+        // ROLE SWAP UI
+        // ==================================================
 
-        // Cancel all mobile touches/input first.
+        ShowRoleSwappedImage();
+
+        // ==================================================
+        // CANCEL ACTIVE INPUT
+        // ==================================================
+
         if (mobileInputController != null)
+        {
             mobileInputController.CancelAllInput();
+        }
 
-        // Cancel active abilities.
+        // ==================================================
+        // CANCEL ACTIVE ABILITIES
+        // ==================================================
+
         if (playerBoost != null)
+        {
             playerBoost.CancelBoost();
+        }
 
         if (playerShield != null)
+        {
             playerShield.CancelShield();
+        }
 
         if (playerWeapon != null)
+        {
             playerWeapon.CancelFiring();
+        }
 
-        Debug.Log("QUANTUM FLUX! New Phase: " + currentPhase);
+        // ==================================================
+        // CHANGE PHASE
+        // ==================================================
 
+        currentPhase = newPhase;
+
+        Debug.Log(
+            "QUANTUM FLUX! New Phase: " +
+            currentPhase
+        );
+
+        // RoleManager receives this event and swaps
+        // Player 1 / Player 2 responsibilities.
         OnPhaseChanged?.Invoke(newPhase);
     }
+
+    // ==================================================
+    // ROLE SWAP IMAGE
+    // ==================================================
+
+    private void ShowRoleSwappedImage()
+    {
+        if (roleSwappedImage == null)
+            return;
+
+        StopCoroutine(nameof(HideRoleSwappedImage));
+
+        roleSwappedImage.gameObject.SetActive(true);
+
+        StartCoroutine(
+            HideRoleSwappedImage()
+        );
+    }
+
+    private IEnumerator HideRoleSwappedImage()
+    {
+        yield return new WaitForSeconds(
+            roleSwappedDisplayDuration
+        );
+
+        if (roleSwappedImage != null)
+        {
+            roleSwappedImage.gameObject.SetActive(false);
+        }
+    }
+
+    // ==================================================
+    // ROUND END
+    // ==================================================
 
     private void CheckRoundEnd()
     {
@@ -143,59 +220,84 @@ public class RoundManager : MonoBehaviour
 
         OnRoundLost?.Invoke();
     }
+
+    // ==================================================
+    // FLUX WARNING
+    // ==================================================
+
     private void CheckFluxWarning()
     {
         if (currentPhase == GamePhase.Patrol)
         {
-            float remaining = alertTime - currentTime;
+            float remaining =
+                alertTime - currentTime;
 
-            if (remaining <= 3f &&
+            if (remaining <= warningTime &&
                 remaining > 2f &&
                 alertWarningStep < 1)
             {
                 alertWarningStep = 1;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 3..."
+                );
             }
             else if (remaining <= 2f &&
                      remaining > 1f &&
                      alertWarningStep < 2)
             {
                 alertWarningStep = 2;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 2...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 2..."
+                );
             }
             else if (remaining <= 1f &&
                      remaining > 0f &&
                      alertWarningStep < 3)
             {
                 alertWarningStep = 3;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 1...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 1..."
+                );
             }
         }
 
         if (currentPhase == GamePhase.Alert)
         {
-            float remaining = criticalTime - currentTime;
+            float remaining =
+                criticalTime - currentTime;
 
-            if (remaining <= 3f &&
+            if (remaining <= warningTime &&
                 remaining > 2f &&
                 criticalWarningStep < 1)
             {
                 criticalWarningStep = 1;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 3..."
+                );
             }
             else if (remaining <= 2f &&
                      remaining > 1f &&
                      criticalWarningStep < 2)
             {
                 criticalWarningStep = 2;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 2...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 2..."
+                );
             }
             else if (remaining <= 1f &&
                      remaining > 0f &&
                      criticalWarningStep < 3)
             {
                 criticalWarningStep = 3;
-                OnFluxWarning?.Invoke("QUANTUM FLUX IN 1...");
+
+                OnFluxWarning?.Invoke(
+                    "QUANTUM FLUX IN 1..."
+                );
             }
         }
     }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8219536145790805393}
   - component: {fileID: 3161870123391339341}
   - component: {fileID: -1023555904365000788}
+  - component: {fileID: -7208307704298319083}
   m_Layer: 0
   m_Name: Player Projectile
   m_TagString: Untagged
@@ -28,8 +29,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7546985789151149747}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: -0.27490523, w: 0.9614713}
+  m_LocalPosition: {x: 0.07665294, y: -1.77, z: 0}
   m_LocalScale: {x: 0.15, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -180,3 +181,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLaser
   speed: 12
+  minX: -12
+  maxX: 12
+  minY: -7
+  maxY: 10
+--- !u!114 &-7208307704298319083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7546985789151149747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6e6dc5e35a3b694fa19fbe312a32be8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoolReference

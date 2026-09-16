@@ -6,12 +6,19 @@ public class BottomZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Breach breach = other.GetComponent<Breach>();
+        Breach breach =
+            other.GetComponent<Breach>();
 
-        if (breach != null)
+        if (breach == null)
+            return;
+
+        // Reaching the bottom immediately loses the round.
+        if (roundManager != null)
         {
             roundManager.LoseRound();
-            Destroy(breach.gameObject);
         }
+
+        // Breach is pooled instead of destroyed.
+        breach.ReturnToPoolFromBottom();
     }
 }
