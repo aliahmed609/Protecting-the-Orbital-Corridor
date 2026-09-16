@@ -10,10 +10,12 @@ public class FluxWarningUI : MonoBehaviour
 
     private void Start()
     {
-        warningPanel.SetActive(false);
+        if (warningPanel != null)
+            warningPanel.SetActive(false);
+
         if (roundManager != null)
         {
-            roundManager.OnFluxWarning += ShowWarning; 
+            roundManager.OnFluxWarning += ShowWarning;
         }
     }
 
@@ -27,6 +29,9 @@ public class FluxWarningUI : MonoBehaviour
 
     private void ShowWarning(string message)
     {
+        if (warningText == null || warningPanel == null)
+            return;
+
         warningText.text = message;
         warningPanel.SetActive(true);
 

@@ -16,22 +16,59 @@ public class PlayerBoost : MonoBehaviour
 
     public bool IsBoostActive => boostTimer > 0f;
     public float BoostTimeRemaining => Mathf.Max(boostTimer, 0f);
+    public float BoostCooldownRemaining => Mathf.Max(cooldownTimer, 0f);
 
     private void Update()
     {
         if (boostTimer > 0f)
+        {
             boostTimer -= Time.deltaTime;
+
+            if (boostTimer <= 0f)
+            {
+                StopBoost();
+            }
+        }
 
         if (cooldownTimer > 0f)
             cooldownTimer -= Time.deltaTime;
 
-        if (roleManager.Player1Role != RoleManager.Role.Pilot)
+        if (roleManager == null)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Space) && cooldownTimer <= 0f)
+        int pilotPlayer = GetCurrentPilot();
+
+        if (pilotPlayer == -1)
+            return;
+
+        if (GetBoostInput(pilotPlayer) && cooldownTimer <= 0f)
         {
             ActivateBoost();
         }
+    }
+
+    private int GetCurrentPilot()
+    {
+        if (roleManager.Player1Role == RoleManager.Role.Pilot)
+            return 1;
+
+        if (roleManager.Player2Role == RoleManager.Role.Pilot)
+            return 2;
+
+        return -1;
+    }
+
+    private bool GetBoostInput(int pilotPlayer)
+    {
+        // Mobile input
+        if (MobileInputController.Instance != null)
+        {
+            if (MobileInputController.Instance.GetBoostInput(pilotPlayer))
+                return true;
+        }
+
+        // Keyboard development input
+        return Input.GetKeyDown(KeyCode.Space);
     }
 
     private void ActivateBoost()
@@ -39,25 +76,31 @@ public class PlayerBoost : MonoBehaviour
         boostTimer = boostDuration;
         cooldownTimer = boostCooldown;
 
-        shipController.SetSpeedMultiplier(boostMultiplier);
-
-        Invoke(nameof(StopBoost), boostDuration);
+        if (shipController != null)
+        {
+            shipController.SetSpeedMultiplier(boostMultiplier);
+        }
 
         Debug.Log("BOOST ACTIVATED!");
     }
 
     private void StopBoost()
     {
-        shipController.SetSpeedMultiplier(1f);
+        boostTimer = 0f;
+
+        if (shipController != null)
+        {
+            shipController.SetSpeedMultiplier(1f);
+        }
 
         Debug.Log("BOOST ENDED!");
     }
+
     public void CancelBoost()
     {
         boostTimer = 0f;
-        CancelInvoke(nameof(StopBoost));
 
-        shipController.SetSpeedMultiplier(1f);
+        StopBoost();
 
         Debug.Log("Boost Cancelled!");
     }

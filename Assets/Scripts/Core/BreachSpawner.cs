@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class BreachSpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject breachPrefab;
+    [Header("References")]
+    [SerializeField] private ObjectPool breachPool;
+
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private ScoreManager scoreManager;
 
@@ -14,35 +16,76 @@ public class BreachSpawner : MonoBehaviour
     [Header("Critical")]
     [SerializeField] private float criticalSpawnMultiplier = 0.70f;
 
+    [Header("Spawn Check")]
     [SerializeField] private float spawnCheckRadius = 0.8f;
     [SerializeField] private LayerMask obstacleLayer;
 
     private float nextSpawnTime;
 
+    // ==================================================
+    // UNITY
+    // ==================================================
+
+    private void Start()
+    {
+        // Do not spawn on the first frame.
+        nextSpawnTime =
+            Time.time + spawnInterval;
+    }
+
     private void Update()
     {
+        if (roundManager == null)
+            return;
+
         if (!roundManager.IsRoundActive)
             return;
 
-        if (roundManager.CurrentPhase == RoundManager.GamePhase.Patrol)
+        // Breaches do not spawn during Patrol.
+        if (roundManager.CurrentPhase ==
+            RoundManager.GamePhase.Patrol)
+        {
             return;
+        }
 
         if (Time.time >= nextSpawnTime)
         {
             SpawnBreach();
-            nextSpawnTime = Time.time + GetSpawnInterval();
+
+            nextSpawnTime =
+                Time.time + GetSpawnInterval();
         }
     }
 
+    // ==================================================
+    // SPAWN
+    // ==================================================
+
     private void SpawnBreach()
     {
-        float randomX = Random.Range(spawnXMin, spawnXMax);
+        if (breachPool == null)
+        {
+            Debug.LogError(
+                "BreachSpawner: Breach Pool is not assigned!"
+            );
 
-        Vector2 spawnPosition = new Vector2(
-            randomX,
-            transform.position.y
-        );
+            return;
+        }
 
+        float randomX =
+            Random.Range(
+                spawnXMin,
+                spawnXMax
+            );
+
+        Vector2 spawnPosition =
+            new Vector2(
+                randomX,
+                transform.position.y
+            );
+
+        // Check the spawn position BEFORE
+        // taking an object from the pool.
         if (!SpawnUtility.IsPositionClear(
             spawnPosition,
             spawnCheckRadius,
@@ -51,25 +94,56 @@ public class BreachSpawner : MonoBehaviour
             return;
         }
 
-        GameObject breach = Instantiate(
-            breachPrefab,
-            spawnPosition,
-            Quaternion.identity
+        GameObject breachObject =
+            breachPool.Get();
+
+        if (breachObject == null)
+        {
+            Debug.LogError(
+                "BreachSpawner: Breach Pool returned NULL!"
+            );
+
+            return;
+        }
+
+        breachObject.transform.position =
+            spawnPosition;
+
+        breachObject.transform.rotation =
+            Quaternion.identity;
+
+        Breach breach =
+            breachObject.GetComponent<Breach>();
+
+        if (breach == null)
+        {
+            Debug.LogError(
+                "BreachSpawner: Breach prefab has no Breach component!"
+            );
+
+            return;
+        }
+
+        breach.SetScoreManager(
+            scoreManager
         );
 
-        Breach breachScript = breach.GetComponent<Breach>();
-
-        if (breachScript != null)
-        {
-            breachScript.SetScoreManager(scoreManager);
-        }
+        breach.SetRoundManager(
+            roundManager
+        );
     }
+
+    // ==================================================
+    // DIFFICULTY
+    // ==================================================
 
     private float GetSpawnInterval()
     {
-        if (roundManager.CurrentPhase == RoundManager.GamePhase.Critical)
+        if (roundManager.CurrentPhase ==
+            RoundManager.GamePhase.Critical)
         {
-            return spawnInterval * criticalSpawnMultiplier;
+            return spawnInterval *
+                   criticalSpawnMultiplier;
         }
 
         return spawnInterval;

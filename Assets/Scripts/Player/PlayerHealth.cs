@@ -2,16 +2,20 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
+    [Header("Hull")]
     [SerializeField] private int maxHull = 3;
     [SerializeField] private float invulnerabilityTime = 1f;
+
+    [Header("References")]
     [SerializeField] private PlayerShield playerShield;
     [SerializeField] private RoundManager roundManager;
 
     private int currentHull;
-    public int MaxHull => maxHull;
     private float invulnerabilityTimer;
 
+    public int MaxHull => maxHull;
     public int CurrentHull => currentHull;
+    public bool IsInvulnerable => invulnerabilityTimer > 0f;
 
     private void Start()
     {
@@ -28,13 +32,20 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if (damage <= 0)
+            return;
+
+        // Shield prevents damage completely.
         if (playerShield != null && playerShield.IsShieldActive)
             return;
 
+        // Prevent multiple hits from removing multiple hull points
+        // during the invulnerability window.
         if (invulnerabilityTimer > 0f)
             return;
 
         currentHull -= damage;
+
         invulnerabilityTimer = invulnerabilityTime;
 
         Debug.Log("Ship Hull: " + currentHull);
@@ -47,8 +58,13 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
+        currentHull = 0;
+
         Debug.Log("SHIP DESTROYED!");
 
-        roundManager.LoseRound();
+        if (roundManager != null)
+        {
+            roundManager.LoseRound();
+        }
     }
 }

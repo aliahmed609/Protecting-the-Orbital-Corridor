@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class DebrisSpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject debrisPrefab;
+    [Header("References")]
+    [SerializeField] private ObjectPool debrisPool;
+
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private ScoreManager scoreManager;
 
@@ -15,26 +17,53 @@ public class DebrisSpawner : MonoBehaviour
 
     private float nextSpawnTime;
 
+    private void Start()
+    {
+        nextSpawnTime = Time.time + spawnInterval;
+    }
     private void Update()
     {
+        if (roundManager == null)
+            return;
+
         if (!roundManager.IsRoundActive)
             return;
 
         if (Time.time >= nextSpawnTime)
         {
             SpawnDebris();
-            nextSpawnTime = Time.time + spawnInterval;
+
+            nextSpawnTime =
+                Time.time + spawnInterval;
         }
     }
 
+    // ==================================================
+    // SPAWN
+    // ==================================================
+
     private void SpawnDebris()
     {
-        float randomX = Random.Range(spawnXMin, spawnXMax);
+        if (debrisPool == null)
+        {
+            Debug.LogError(
+                "DebrisSpawner: Debris Pool is not assigned!"
+            );
 
-        Vector2 spawnPosition = new Vector2(
-            randomX,
-            transform.position.y
-        );
+            return;
+        }
+
+        float randomX =
+            Random.Range(
+                spawnXMin,
+                spawnXMax
+            );
+
+        Vector2 spawnPosition =
+            new Vector2(
+                randomX,
+                transform.position.y
+            );
 
         if (!SpawnUtility.IsPositionClear(
             spawnPosition,
@@ -44,17 +73,38 @@ public class DebrisSpawner : MonoBehaviour
             return;
         }
 
-        GameObject debris = Instantiate(
-            debrisPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
+        GameObject debrisObject =
+            debrisPool.Get();
 
-        Debris debrisScript = debris.GetComponent<Debris>();
-
-        if (debrisScript != null)
+        if (debrisObject == null)
         {
-            debrisScript.SetScoreManager(scoreManager);
+            Debug.LogError(
+                "DebrisSpawner: Debris Pool returned NULL!"
+            );
+
+            return;
         }
+
+        debrisObject.transform.position =
+            spawnPosition;
+
+        debrisObject.transform.rotation =
+            Quaternion.identity;
+
+        Debris debris =
+            debrisObject.GetComponent<Debris>();
+
+        if (debris == null)
+        {
+            Debug.LogError(
+                "DebrisSpawner: Debris prefab has no Debris component!"
+            );
+
+            return;
+        }
+
+        debris.SetScoreManager(
+            scoreManager
+        );
     }
 }

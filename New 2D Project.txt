@@ -14,55 +14,7 @@ I have Boostlogo, PlayerShield logo just to make them enable if boost or Shield 
 
 
 Scripts_backup:
-using UnityEngine;
 
-public class RoleManager : MonoBehaviour
-{
-    public enum Role
-    {
-        Pilot,
-        Gunner
-    }
 
-    [SerializeField] private Role player1Role = Role.Pilot;
-    [SerializeField] private Role player2Role = Role.Gunner;
+See What we want Player1 will always be blue means Blue Text and Border and Player2 Red role text and Border
 
-    [SerializeField] private RoundManager roundManager;
-
-    public Role Player1Role => player1Role;
-    public Role Player2Role => player2Role;
-
-    private void Start()
-    {
-        if (roundManager != null)
-        {
-            roundManager.OnPhaseChanged += HandlePhaseChanged;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (roundManager != null)
-        {
-            roundManager.OnPhaseChanged -= HandlePhaseChanged;
-        }
-    }
-
-    private void HandlePhaseChanged(RoundManager.GamePhase phase)
-    {
-        if (phase == RoundManager.GamePhase.Alert)
-        {
-            player1Role = Role.Gunner;
-            player2Role = Role.Pilot;
-        }
-        else if (phase == RoundManager.GamePhase.Critical)
-        {
-            player1Role = Role.Pilot;
-            player2Role = Role.Gunner;
-        }
-
-        Debug.Log("Roles Updated!");
-        Debug.Log("Player 1 = " + player1Role);
-        Debug.Log("Player 2 = " + player2Role);
-    }
-}

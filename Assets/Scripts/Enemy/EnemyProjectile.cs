@@ -1,27 +1,109 @@
 using UnityEngine;
 
-public class EnemyProjectile : MonoBehaviour
+public class EnemyProjectile : MonoBehaviour, IPoolable
 {
+    [Header("Movement")]
     [SerializeField] private float speed = 5f;
 
-    public void SetSpeed(float newSpeed)
-    {
-        speed = newSpeed;
-    }
+    [Header("Cleanup")]
+    [SerializeField] private float bottomLimit = -7f;
+
+    private float currentSpeed;
+    private bool isReturning;
+
+    // ==================================================
+    // UPDATE
+    // ==================================================
 
     private void Update()
     {
-        transform.position += Vector3.down * speed * Time.deltaTime;
+        if (isReturning)
+            return;
+
+        transform.position +=
+            Vector3.down *
+            currentSpeed *
+            Time.deltaTime;
+
+        if (transform.position.y <= bottomLimit)
+        {
+            ReturnToPool();
+        }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    // ==================================================
+    // SETTERS
+    // ==================================================
+
+    public void SetSpeed(float newSpeed)
     {
-        PlayerHealth player = other.GetComponent<PlayerHealth>();
+        currentSpeed = newSpeed;
+    }
+
+    // ==================================================
+    // PLAYER COLLISION
+    // ==================================================
+
+    private void OnTriggerEnter2D(
+        Collider2D other)
+    {
+        if (isReturning)
+            return;
+
+        PlayerHealth player =
+            other.GetComponent<PlayerHealth>();
 
         if (player != null)
         {
             player.TakeDamage(1);
-            Destroy(gameObject);
+
+            ReturnToPool();
         }
+    }
+
+    // ==================================================
+    // RETURN TO POOL
+    // ==================================================
+
+    private void ReturnToPool()
+    {
+        if (isReturning)
+            return;
+
+        isReturning = true;
+
+        PoolReference poolReference =
+            GetComponent<PoolReference>();
+
+        if (poolReference != null)
+        {
+            poolReference.ReturnToPool();
+        }
+        else
+        {
+            Debug.LogError(
+                "EnemyProjectile has no PoolReference!"
+            );
+
+            gameObject.SetActive(false);
+        }
+    }
+
+    // ==================================================
+    // POOL LIFECYCLE
+    // ==================================================
+
+    public void OnSpawned()
+    {
+        isReturning = false;
+
+        currentSpeed = speed;
+    }
+
+    public void OnDespawned()
+    {
+        isReturning = true;
+
+        currentSpeed = 0f;
     }
 }

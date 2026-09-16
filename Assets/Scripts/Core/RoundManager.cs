@@ -15,15 +15,18 @@ public class RoundManager : MonoBehaviour
     [Header("Phase Timings")]
     [SerializeField] private float alertTime = 20f;
     [SerializeField] private float criticalTime = 40f;
+
+    [Header("References")]
     [SerializeField] private PlayerBoost playerBoost;
     [SerializeField] private PlayerShield playerShield;
     [SerializeField] private PlayerWeapon playerWeapon;
+    [SerializeField] private MobileInputController mobileInputController;
 
     [Header("Flux Warning")]
     [SerializeField] private float warningTime = 3f;
 
-    private bool alertWarningShown;
-    private bool criticalWarningShown;
+    private int alertWarningStep;
+    private int criticalWarningStep;
 
     public System.Action<string> OnFluxWarning;
     public System.Action OnRoundWon;
@@ -60,8 +63,8 @@ public class RoundManager : MonoBehaviour
 
     private void StartRound()
     {
-        alertWarningShown = false;
-        criticalWarningShown = false;
+        alertWarningStep = 0;
+        criticalWarningStep = 0;
 
         currentTime = 0f;
         currentPhase = GamePhase.Patrol;
@@ -88,6 +91,11 @@ public class RoundManager : MonoBehaviour
     {
         currentPhase = newPhase;
 
+        // Cancel all mobile touches/input first.
+        if (mobileInputController != null)
+            mobileInputController.CancelAllInput();
+
+        // Cancel active abilities.
         if (playerBoost != null)
             playerBoost.CancelBoost();
 
@@ -137,24 +145,58 @@ public class RoundManager : MonoBehaviour
     }
     private void CheckFluxWarning()
     {
-        if (!alertWarningShown &&
-            currentPhase == GamePhase.Patrol &&
-            currentTime >= alertTime - warningTime)
+        if (currentPhase == GamePhase.Patrol)
         {
-            alertWarningShown = true;
+            float remaining = alertTime - currentTime;
 
-            Debug.Log("QUANTUM FLUX IN 3...");
-            OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+            if (remaining <= 3f &&
+                remaining > 2f &&
+                alertWarningStep < 1)
+            {
+                alertWarningStep = 1;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+            }
+            else if (remaining <= 2f &&
+                     remaining > 1f &&
+                     alertWarningStep < 2)
+            {
+                alertWarningStep = 2;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 2...");
+            }
+            else if (remaining <= 1f &&
+                     remaining > 0f &&
+                     alertWarningStep < 3)
+            {
+                alertWarningStep = 3;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 1...");
+            }
         }
 
-        if (!criticalWarningShown &&
-            currentPhase == GamePhase.Alert &&
-            currentTime >= criticalTime - warningTime)
+        if (currentPhase == GamePhase.Alert)
         {
-            criticalWarningShown = true;
+            float remaining = criticalTime - currentTime;
 
-            Debug.Log("QUANTUM FLUX IN 3...");
-            OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+            if (remaining <= 3f &&
+                remaining > 2f &&
+                criticalWarningStep < 1)
+            {
+                criticalWarningStep = 1;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 3...");
+            }
+            else if (remaining <= 2f &&
+                     remaining > 1f &&
+                     criticalWarningStep < 2)
+            {
+                criticalWarningStep = 2;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 2...");
+            }
+            else if (remaining <= 1f &&
+                     remaining > 0f &&
+                     criticalWarningStep < 3)
+            {
+                criticalWarningStep = 3;
+                OnFluxWarning?.Invoke("QUANTUM FLUX IN 1...");
+            }
         }
     }
 }
