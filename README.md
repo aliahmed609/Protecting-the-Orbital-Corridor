@@ -1,68 +1,42 @@
-Operation Cross-Fire
+A 2D local co-op space shooter built in Unity where two players control one shared interceptor.
 
-A local 2D co-op prototype where two players control one shared ship and defend against enemies and hazards for 60 seconds.
+Gameplay
+Pilot: Movement and Boost
+Gunner: Aiming, Firing, and Shield
+Quantum Flux: Switches the players' roles and increases difficulty.
+Enemies, debris, and breaches spawn throughout the round.
+Controls
+Mobile
 
-What We Have
-One shared player ship
-Pilot and Gunner roles for Player 1 and Player 2
-Keyboard/mouse controls
-Mobile touch controls
-Horizontal ship movement
-Player aiming and firing
-Boost and Shield abilities
-Enemy drones
-Enemy projectiles
-Debris
-Breach hazards
-Score and hull system
-60-second round timer
-Patrol, Alert and Critical phases
-Quantum Flux role switching at 20s and 40s
-Flux countdown and role-swapped UI
-Spawn position checking
-Pooling
+The screen is split between Player 1 and Player 2, with multi-touch support for simultaneous controls.
 
-Frequently spawned objects use a simple pooling system instead of repeatedly creating and destroying objects during gameplay.
+Pilot → Movement + Boost
+Gunner → AimPad + Fire + Shield
+AimPad uses relative movement, allowing the Gunner to aim without moving their finger across the screen.
+PC
+A / D → Move
+Space → Boost
+Right Mouse Button → Shield
+Architecture
 
-Currently pooled:
+The project uses separate systems for roles, movement, aiming, weapons, abilities, spawning, and input.
 
-Enemies
-Player projectiles
-Enemy projectiles
-Debris
-Breach hazards
+Key systems include:
 
-Pooled objects implement IPoolable so their state can be reset when spawned and returned.
+RoleManager — Handles player roles and Quantum Flux switching.
+PlayerShipController — Handles movement and screen boundaries.
+GunnerAim — Handles aiming and reticle movement.
+PlayerWeapon — Handles weapon firing.
+PlayerBoost / PlayerShield — Handle abilities and cooldowns.
+MobileInputController / PCInputController — Handle platform-specific input.
+Spawner systems handle enemies, debris, breaches, and projectiles.
 
-Role Switching
+Object pooling is used for frequently spawned objects to reduce Instantiate/Destroy overhead.
 
-Player 1 starts as Pilot and Player 2 as Gunner.
+Performance & Screen Support
 
-At 20 seconds:
+The game is designed around a 1920 × 1080 (16:9) reference resolution, with responsive UI scaling for different screen sizes and aspect ratios. Camera-based movement boundaries help keep the player within the visible play area.
 
-Roles swap
-Difficulty changes to Alert
-Breach hazards start spawning
+AI Usage
 
-At 40 seconds:
-
-Roles swap again
-Game enters Critical phase
-Spawn and projectile difficulty increases
-
-During Quantum Flux, active movement, firing, abilities and mobile touches are cancelled before the roles change.
-
-Main Systems
-RoundManager — controls timer, phases, Flux and round ending
-RoleManager — controls Player 1/Player 2 roles
-MobileInputController — stores mobile input
-EnemySpawner — spawns enemies
-DebrisSpawner — spawns debris
-BreachSpawner — spawns breaches
-ObjectPool — handles pooled objects
-PoolReference / IPoolable — manages pool lifecycle
-Notes
-
-The project is intentionally kept simple and focused on gameplay and engineering requirements rather than detailed art or extra features.
-
-AI tools were used during development for coding assistance and debugging. All generated code was reviewed and tested in Unity.
+AI was used as a development assistant for code structure, debugging, input implementation, optimization discussions, and troubleshooting. All code was reviewed, tested, and integrated manually.
