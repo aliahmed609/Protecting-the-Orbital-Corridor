@@ -7,11 +7,11 @@ public class BreachSpawner : MonoBehaviour
 
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private ScoreManager scoreManager;
+    [SerializeField] private Camera mainCamera;
 
     [Header("Spawn")]
     [SerializeField] private float spawnInterval = 4f;
-    [SerializeField] private float spawnXMin = -8f;
-    [SerializeField] private float spawnXMax = 8f;
+    [SerializeField] private float horizontalPadding = 0.5f;
 
     [Header("Critical")]
     [SerializeField] private float criticalSpawnMultiplier = 0.70f;
@@ -70,6 +70,35 @@ public class BreachSpawner : MonoBehaviour
             );
 
             return;
+        }
+
+        float spawnXMin;
+        float spawnXMax;
+
+        if (mainCamera != null)
+        {
+            float cameraHalfWidth =
+                mainCamera.orthographicSize *
+                mainCamera.aspect;
+
+            spawnXMin =
+                mainCamera.transform.position.x
+                - cameraHalfWidth
+                + horizontalPadding;
+
+            spawnXMax =
+                mainCamera.transform.position.x
+                + cameraHalfWidth
+                - horizontalPadding;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "BreachSpawner: Main Camera is not assigned."
+            );
+
+            spawnXMin = transform.position.x;
+            spawnXMax = transform.position.x;
         }
 
         float randomX =

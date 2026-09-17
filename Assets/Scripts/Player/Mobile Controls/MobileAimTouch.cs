@@ -10,119 +10,172 @@ public class MobileAimTouch : MonoBehaviour,
     [Header("Player")]
     [SerializeField] private int playerNumber = 1;
 
+    [Header("References")]
+    [SerializeField] private GameObject reticle;
+    [SerializeField] private Transform player;
+
+    [Header("Reticle")]
+    [SerializeField] private float reticleDistance = 3f;
+
+    [Header("Aim")]
+    [SerializeField] private float aimSensitivity = 0.02f;
+
     private int activePointerId = -1;
 
-    // ==================================================
-    // UNITY
-    // ==================================================
+    private void Awake()
+    {
+        if (reticle != null)
+            reticle.SetActive(false);
+    }
 
-    private void OnEnable()
+    private void Start()
     {
         if (MobileInputController.Instance != null)
         {
-            MobileInputController.Instance.OnInputCancelled +=
-                HandleInputCancelled;
+            MobileInputController.Instance.RegisterAimTouch(
+                playerNumber,
+                this
+            );
         }
     }
 
-    private void OnDisable()
+    // --------------------------------------------------
+    // TOUCH START
+    // --------------------------------------------------
+
+    public void OnPointerDown(PointerEventData eventData)
     {
-        if (MobileInputController.Instance != null)
-        {
-            MobileInputController.Instance.OnInputCancelled -=
-                HandleInputCancelled;
-        }
-
-        EndAim();
-    }
-
-    // ==================================================
-    // POINTER DOWN
-    // ==================================================
-
-    public void OnPointerDown(
-        PointerEventData eventData)
-    {
-        // This control already owns a touch.
         if (activePointerId != -1)
             return;
 
-        activePointerId =
-            eventData.pointerId;
+        activePointerId = eventData.pointerId;
 
-        UpdateAim(eventData);
+        Debug.Log(
+            "AIM START - Player " +
+            playerNumber
+        );
+
+        ShowReticle();
+
+        // Start aiming
+        SendAimDelta(Vector2.zero);
+
+        // Start firing automatically
+        SetAimFire(true);
     }
 
-    // ==================================================
+    // --------------------------------------------------
     // DRAG
-    // ==================================================
+    // --------------------------------------------------
 
-    public void OnDrag(
-        PointerEventData eventData)
+    public void OnDrag(PointerEventData eventData)
     {
-        // Only the original touch can control this aim pad.
         if (eventData.pointerId != activePointerId)
             return;
 
-        UpdateAim(eventData);
+        Vector2 delta =
+            eventData.delta * aimSensitivity;
+
+        SendAimDelta(delta);
     }
 
-    // ==================================================
-    // POINTER UP
-    // ==================================================
+    // --------------------------------------------------
+    // TOUCH END
+    // --------------------------------------------------
 
-    public void OnPointerUp(
-        PointerEventData eventData)
+    public void OnPointerUp(PointerEventData eventData)
     {
         if (eventData.pointerId != activePointerId)
             return;
+
+        Debug.Log(
+            "AIM END - Player " +
+            playerNumber
+        );
 
         EndAim();
     }
 
-    // ==================================================
+    // --------------------------------------------------
     // POINTER EXIT
-    // ==================================================
+    // --------------------------------------------------
 
-    public void OnPointerExit(
-        PointerEventData eventData)
+    public void OnPointerExit(PointerEventData eventData)
     {
         // Intentionally empty.
-
-        // Leaving the UI rectangle does NOT release
-        // ownership of the touch.
+        //
+        // Leaving the visual boundary while dragging
+        // should NOT immediately cancel the AimPad.
     }
 
-    // ==================================================
-    // AIM
-    // ==================================================
+    // --------------------------------------------------
+    // RETICLE
+    // --------------------------------------------------
 
-    private void UpdateAim(
-        PointerEventData eventData)
+    private void ShowReticle()
     {
-        MobileInputController input =
-            MobileInputController.Instance;
+        if (reticle == null)
+            return;
 
-        if (input == null)
+        reticle.SetActive(true);
+
+        if (player != null)
+        {
+            Vector3 position =
+                player.position +
+                Vector3.up * reticleDistance;
+
+            position.z = 0f;
+
+            reticle.transform.position = position;
+        }
+    }
+
+    // --------------------------------------------------
+    // AIM
+    // --------------------------------------------------
+
+    private void SendAimDelta(Vector2 delta)
+    {
+        if (MobileInputController.Instance == null)
             return;
 
         if (playerNumber == 1)
         {
-            input.SetPlayer1Aim(
-                eventData.position
+            MobileInputController.Instance.SetPlayer1Aim(delta);
+        }
+        else
+        {
+            MobileInputController.Instance.SetPlayer2Aim(delta);
+        }
+    }
+
+    // --------------------------------------------------
+    // AIM FIRE
+    // --------------------------------------------------
+
+    private void SetAimFire(bool pressed)
+    {
+        if (MobileInputController.Instance == null)
+            return;
+
+        if (playerNumber == 1)
+        {
+            MobileInputController.Instance.SetPlayer1AimFire(
+                pressed
             );
         }
         else
         {
-            input.SetPlayer2Aim(
-                eventData.position
+            MobileInputController.Instance.SetPlayer2AimFire(
+                pressed
             );
         }
     }
 
-    // ==================================================
-    // END AIM
-    // ==================================================
+    // --------------------------------------------------
+    // END
+    // --------------------------------------------------
 
     private void EndAim()
     {
@@ -130,38 +183,37 @@ public class MobileAimTouch : MonoBehaviour,
         {
             if (playerNumber == 1)
             {
-                MobileInputController.Instance
-                    .EndPlayer1Aim();
+                MobileInputController.Instance.EndPlayer1Aim();
             }
             else
             {
-                MobileInputController.Instance
-                    .EndPlayer2Aim();
+                MobileInputController.Instance.EndPlayer2Aim();
             }
         }
 
-        activePointerId = -1;
-    }
-
-    // ==================================================
-    // QUANTUM FLUX
-    // ==================================================
-
-    private void HandleInputCancelled()
-    {
-        // Important:
-        // Release the pointer ownership itself,
-        // not just the input value.
+        if (reticle != null)
+            reticle.SetActive(false);
 
         activePointerId = -1;
     }
 
-    // ==================================================
-    // EXTERNAL CANCEL
-    // ==================================================
+    // --------------------------------------------------
+    // CANCEL
+    // --------------------------------------------------
 
     public void CancelTouch()
     {
+        if (activePointerId == -1)
+            return;
+
         EndAim();
+    }
+
+    private void OnDisable()
+    {
+        if (activePointerId != -1)
+        {
+            EndAim();
+        }
     }
 }

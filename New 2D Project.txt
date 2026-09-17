@@ -1,10 +1,268 @@
-New 2D Project:
+New Implements:
 
-Next Prompt:
+Mobile Controls:
 
-My Current Hierarchy:
+if i press Shoot Button it Just Shoot in the Forward Direction and if I use the AimPad our Raticle appear on the Screen and can move all the way on the screen if we swap finger on the Aim Pad.  
 
-I have Boostlogo, PlayerShield logo just to make them enable if boost or Shield is enable also we will use a text below them to show timer. timer always will be enable and shieldLogo or BoostLogo will be enable if shield is active.
+lets do this one by one 
+
+1) Fire Button (Tap to Shoot in the forward Direction)
+
+2) AimPad (if we use the AimPad it will appear the Reticle in the Center of Screen or in Front of Player and then our Player Projectile Position will follows the Reticle and Reticle Movements will Cotnrol Through the AimPad.
+
+Again in Short:
+- Player only can shoot if we are holding or touch the Fire Button.
+- Aim Pad Working: Tap on it or Hold will Appear the Reticle in front of Player. then Dragging the Finger will will change the Position of Reticle and if we press the Shoot Button with it. Player Projectile will follow the Reticle. Same like Joystick move the Player we will move the Reticle by dragging it.
+- While holding the AimPad and go to the other side of Screen Left | Right will Cancel the Reticle Tap/Hold and make it Disappear the Reticle as we are no longer touching the AimPad and Player will shoot in Forward Direction.
+
+
+so like that if we swap our Finger on Screen instead of Button nothing will Happen and if we start swapping our finger from AimTouchPad so it will move the Reticle 
+
+
+
+
+
+
+
+Temp Scripts:
+using UnityEngine;
+
+public class MobileInputController : MonoBehaviour
+{
+    public static MobileInputController Instance { get; private set; }
+
+    // Player 1
+    private bool player1Left;
+    private bool player1Right;
+    private bool player1Boost;
+    private bool player1Fire;
+    private bool player1Shield;
+
+    // Player 2
+    private bool player2Left;
+    private bool player2Right;
+    private bool player2Boost;
+    private bool player2Fire;
+    private bool player2Shield;
+
+    private Vector2 player1AimPosition;
+    private Vector2 player2AimPosition;
+
+    private bool player1AimActive;
+    private bool player2AimActive;
+
+    private MobileAimTouch player1AimTouch;
+    private MobileAimTouch player2AimTouch;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
+
+    // --------------------------------------------------
+    // AIM TOUCH REGISTRATION
+    // --------------------------------------------------
+
+    public void RegisterAimTouch(
+        int playerNumber,
+        MobileAimTouch aimTouch)
+    {
+        if (playerNumber == 1)
+        {
+            player1AimTouch = aimTouch;
+        }
+        else if (playerNumber == 2)
+        {
+            player2AimTouch = aimTouch;
+        }
+    }
+
+    // --------------------------------------------------
+    // PLAYER 1
+    // --------------------------------------------------
+
+    public void SetPlayer1Left(bool pressed)
+    {
+        player1Left = pressed;
+    }
+
+    public void SetPlayer1Right(bool pressed)
+    {
+        player1Right = pressed;
+    }
+
+    public void SetPlayer1Boost(bool pressed)
+    {
+        player1Boost = pressed;
+    }
+
+    public void SetPlayer1Fire(bool pressed)
+    {
+        player1Fire = pressed;
+    }
+
+    public void SetPlayer1Shield(bool pressed)
+    {
+        player1Shield = pressed;
+    }
+
+    public void SetPlayer1Aim(Vector2 position)
+    {
+        player1AimPosition = position;
+        player1AimActive = true;
+    }
+
+    public void EndPlayer1Aim()
+    {
+        player1AimActive = false;
+    }
+
+    // --------------------------------------------------
+    // PLAYER 2
+    // --------------------------------------------------
+
+    public void SetPlayer2Left(bool pressed)
+    {
+        player2Left = pressed;
+    }
+
+    public void SetPlayer2Right(bool pressed)
+    {
+        player2Right = pressed;
+    }
+
+    public void SetPlayer2Boost(bool pressed)
+    {
+        player2Boost = pressed;
+    }
+
+    public void SetPlayer2Fire(bool pressed)
+    {
+        player2Fire = pressed;
+    }
+
+    public void SetPlayer2Shield(bool pressed)
+    {
+        player2Shield = pressed;
+    }
+
+    public void SetPlayer2Aim(Vector2 position)
+    {
+        player2AimPosition = position;
+        player2AimActive = true;
+    }
+
+    public void EndPlayer2Aim()
+    {
+        player2AimActive = false;
+    }
+
+    // --------------------------------------------------
+    // READ INPUT
+    // --------------------------------------------------
+
+    public float GetMovementInput(int playerNumber)
+    {
+        if (playerNumber == 1)
+        {
+            if (player1Left && player1Right)
+                return 0f;
+
+            if (player1Left)
+                return -1f;
+
+            if (player1Right)
+                return 1f;
+
+            return 0f;
+        }
+
+        if (player2Left && player2Right)
+            return 0f;
+
+        if (player2Left)
+            return -1f;
+
+        if (player2Right)
+            return 1f;
+
+        return 0f;
+    }
+
+    public bool GetBoostInput(int playerNumber)
+    {
+        return playerNumber == 1
+            ? player1Boost
+            : player2Boost;
+    }
+
+    public bool GetFireInput(int playerNumber)
+    {
+        return playerNumber == 1
+            ? player1Fire
+            : player2Fire;
+    }
+
+    public bool GetShieldInput(int playerNumber)
+    {
+        return playerNumber == 1
+            ? player1Shield
+            : player2Shield;
+    }
+
+    public bool GetAimInput(
+        int playerNumber,
+        out Vector2 position)
+    {
+        if (playerNumber == 1)
+        {
+            position = player1AimPosition;
+            return player1AimActive;
+        }
+
+        position = player2AimPosition;
+        return player2AimActive;
+    }
+
+    // --------------------------------------------------
+    // FLUX RESET
+    // --------------------------------------------------
+
+    public void CancelAllInput()
+    {
+        player1Left = false;
+        player1Right = false;
+        player1Boost = false;
+        player1Fire = false;
+        player1Shield = false;
+
+        player2Left = false;
+        player2Right = false;
+        player2Boost = false;
+        player2Fire = false;
+        player2Shield = false;
+
+        player1AimActive = false;
+        player2AimActive = false;
+
+        // Cancel the actual touch ownership.
+        if (player1AimTouch != null)
+        {
+            player1AimTouch.CancelTouch();
+        }
+
+        if (player2AimTouch != null)
+        {
+            player2AimTouch.CancelTouch();
+        }
+    }
+}
 
 
 
@@ -13,8 +271,417 @@ I have Boostlogo, PlayerShield logo just to make them enable if boost or Shield 
 
 
 
-Scripts_backup:
 
 
-See What we want Player1 will always be blue means Blue Text and Border and Player2 Red role text and Border
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class MobileAimTouch : MonoBehaviour,
+    IPointerDownHandler,
+    IDragHandler,
+    IPointerUpHandler,
+    IPointerExitHandler
+{
+    [Header("Player")]
+    [SerializeField] private int playerNumber = 1;
+
+    [Header("Reticle")]
+    [SerializeField] private GameObject reticle;
+
+    [Header("Reticle Start")]
+    [SerializeField] private Transform player;
+
+    [SerializeField] private float reticleDistance = 3f;
+
+    private int activePointerId = -1;
+
+    private void Awake()
+    {
+        if (reticle != null)
+        {
+            reticle.SetActive(false);
+        }
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (activePointerId != -1)
+            return;
+
+        activePointerId = eventData.pointerId;
+
+        Debug.Log(
+            "AIM START - Player " +
+            playerNumber +
+            " Pointer " +
+            activePointerId
+        );
+
+        // Show reticle.
+        if (reticle != null)
+        {
+            reticle.SetActive(true);
+
+            if (player != null)
+            {
+                Vector3 startPosition =
+                    player.position +
+                    Vector3.up * reticleDistance;
+
+                startPosition.z = 0f;
+
+                reticle.transform.position = startPosition;
+            }
+        }
+
+        SendAim(eventData.position);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (eventData.pointerId != activePointerId)
+            return;
+
+        SendAim(eventData.position);
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.pointerId != activePointerId)
+            return;
+
+        Debug.Log(
+            "AIM END - Player " +
+            playerNumber
+        );
+
+        EndAim();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        // IMPORTANT:
+        // Do not cancel here.
+        //
+        // The finger is allowed to leave the AimPad
+        // while the same finger is still dragging.
+    }
+
+    private void SendAim(Vector2 screenPosition)
+    {
+        if (MobileInputController.Instance == null)
+            return;
+
+        if (playerNumber == 1)
+        {
+            MobileInputController.Instance.SetPlayer1Aim(
+                screenPosition
+            );
+        }
+        else
+        {
+            MobileInputController.Instance.SetPlayer2Aim(
+                screenPosition
+            );
+        }
+    }
+
+    private void EndAim()
+    {
+        if (MobileInputController.Instance != null)
+        {
+            if (playerNumber == 1)
+            {
+                MobileInputController.Instance.EndPlayer1Aim();
+            }
+            else
+            {
+                MobileInputController.Instance.EndPlayer2Aim();
+            }
+        }
+
+        if (reticle != null)
+        {
+            reticle.SetActive(false);
+        }
+
+        activePointerId = -1;
+    }
+
+    public void CancelTouch()
+    {
+        EndAim();
+    }
+
+    private void OnDisable()
+    {
+        EndAim();
+    }
+}
+
+
+
+
+
+
+
+
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+using UnityEngine;
+
+public class GunnerAim : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private RoleManager roleManager;
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private Transform reticle;
+
+    private void Update()
+    {
+        if (roleManager == null ||
+            mainCamera == null ||
+            reticle == null)
+        {
+            return;
+        }
+
+        int gunnerPlayer = GetCurrentGunner();
+
+        if (gunnerPlayer == -1)
+            return;
+
+        if (MobileInputController.Instance != null &&
+            MobileInputController.Instance.GetAimInput(
+                gunnerPlayer,
+                out Vector2 aimPosition))
+        {
+            UpdateAimPosition(aimPosition);
+        }
+    }
+
+    private int GetCurrentGunner()
+    {
+        if (roleManager.Player1Role == RoleManager.Role.Gunner)
+            return 1;
+
+        if (roleManager.Player2Role == RoleManager.Role.Gunner)
+            return 2;
+
+        return -1;
+    }
+
+    private void UpdateAimPosition(Vector2 screenPosition)
+    {
+        Vector3 worldPosition =
+            mainCamera.ScreenToWorldPoint(
+                new Vector3(
+                    screenPosition.x,
+                    screenPosition.y,
+                    -mainCamera.transform.position.z
+                )
+            );
+
+        worldPosition.z = 0f;
+
+        reticle.position = worldPosition;
+    }
+
+    public void ResetAim()
+    {
+        if (reticle != null)
+        {
+            reticle.gameObject.SetActive(false);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+using UnityEngine;
+
+public class PlayerWeapon : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private RoleManager roleManager;
+    [SerializeField] private Transform reticle;
+    [SerializeField] private ObjectPool laserPool;
+    [SerializeField] private PCInputController pcInputController;
+
+    [Header("Weapon")]
+    [SerializeField] private float fireCooldown = 0.25f;
+
+    private float nextFireTime;
+
+    private void Update()
+    {
+        if (roleManager == null)
+            return;
+
+        int gunnerPlayer = GetCurrentGunner();
+
+        if (gunnerPlayer == -1)
+            return;
+
+        bool fireInput = false;
+
+        // PC Fire
+        if (pcInputController != null)
+        {
+            fireInput = pcInputController.GetFireInput();
+        }
+
+        // Mobile Fire
+        if (MobileInputController.Instance != null &&
+            MobileInputController.Instance.GetFireInput(gunnerPlayer))
+        {
+            fireInput = true;
+        }
+
+        if (fireInput && Time.time >= nextFireTime)
+        {
+            Fire();
+
+            nextFireTime = Time.time + fireCooldown;
+        }
+    }
+
+    private int GetCurrentGunner()
+    {
+        if (roleManager.Player1Role == RoleManager.Role.Gunner)
+            return 1;
+
+        if (roleManager.Player2Role == RoleManager.Role.Gunner)
+            return 2;
+
+        return -1;
+    }
+
+    private void FireForward()
+    {
+        if (laserPool == null)
+            return;
+
+        GameObject laser = laserPool.Get();
+
+        if (laser == null)
+            return;
+
+        laser.transform.position = transform.position;
+        laser.transform.rotation = transform.rotation;
+
+        PlayerLaser playerLaser =
+            laser.GetComponent<PlayerLaser>();
+
+        if (playerLaser != null)
+        {
+            Vector2 direction = transform.up;
+
+            playerLaser.SetDirection(direction);
+        }
+    }
+
+    public void CancelFiring()
+    {
+        nextFireTime = Time.time + fireCooldown;
+    }
+    private void Fire()
+    {
+        if (laserPool == null)
+            return;
+
+        GameObject laser = laserPool.Get();
+
+        if (laser == null)
+            return;
+
+        laser.transform.position = transform.position;
+
+        Vector2 direction;
+
+        int gunnerPlayer = GetCurrentGunner();
+
+        bool aimActive = false;
+
+        if (MobileInputController.Instance != null)
+        {
+            aimActive =
+                MobileInputController.Instance.GetAimInput(
+                    gunnerPlayer,
+                    out _
+                );
+        }
+
+        // AimPad + Fire
+        if (aimActive && reticle != null)
+        {
+            direction =
+                reticle.position -
+                transform.position;
+        }
+        // Fire without AimPad
+        else
+        {
+            direction = transform.up;
+        }
+
+        direction.Normalize();
+
+        float angle =
+            Mathf.Atan2(
+                direction.y,
+                direction.x
+            ) * Mathf.Rad2Deg - 90f;
+
+        laser.transform.rotation =
+            Quaternion.Euler(
+                0f,
+                0f,
+                angle
+            );
+
+        PlayerLaser playerLaser =
+            laser.GetComponent<PlayerLaser>();
+
+        if (playerLaser != null)
+        {
+            playerLaser.SetDirection(direction);
+        }
+    }
+}

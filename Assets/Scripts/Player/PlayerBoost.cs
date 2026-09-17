@@ -10,6 +10,7 @@ public class PlayerBoost : MonoBehaviour
     [Header("References")]
     [SerializeField] private RoleManager roleManager;
     [SerializeField] private PlayerShipController shipController;
+    [SerializeField] private PCInputController pcInputController;
 
     private float boostTimer;
     private float cooldownTimer;
@@ -60,15 +61,27 @@ public class PlayerBoost : MonoBehaviour
 
     private bool GetBoostInput(int pilotPlayer)
     {
-        // Mobile input
+        // --------------------------------------------------
+        // PC INPUT
+        // --------------------------------------------------
+
+        if (pcInputController != null)
+        {
+            if (pcInputController.GetBoostInput())
+                return true;
+        }
+
+        // --------------------------------------------------
+        // MOBILE INPUT
+        // --------------------------------------------------
+
         if (MobileInputController.Instance != null)
         {
             if (MobileInputController.Instance.GetBoostInput(pilotPlayer))
                 return true;
         }
 
-        // Keyboard development input
-        return Input.GetKeyDown(KeyCode.Space);
+        return false;
     }
 
     private void ActivateBoost()

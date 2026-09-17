@@ -8,11 +8,11 @@ public class EnemySpawner : MonoBehaviour
 
     [SerializeField] private RoundManager roundManager;
     [SerializeField] private ScoreManager scoreManager;
+    [SerializeField] private Camera mainCamera;
 
     [Header("Spawn")]
     [SerializeField] private float spawnInterval = 2f;
-    [SerializeField] private float spawnXMin = -8f;
-    [SerializeField] private float spawnXMax = 8f;
+    [SerializeField] private float horizontalPadding = 0.5f;
 
     [SerializeField] private float spawnCheckRadius = 0.8f;
     [SerializeField] private LayerMask obstacleLayer;
@@ -52,6 +52,36 @@ public class EnemySpawner : MonoBehaviour
             );
 
             return;
+        }
+
+        float spawnXMin;
+        float spawnXMax;
+
+        if (mainCamera != null)
+        {
+            float cameraHalfWidth =
+                mainCamera.orthographicSize *
+                mainCamera.aspect;
+
+            spawnXMin =
+                mainCamera.transform.position.x
+                - cameraHalfWidth
+                + horizontalPadding;
+
+            spawnXMax =
+                mainCamera.transform.position.x
+                + cameraHalfWidth
+                - horizontalPadding;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "EnemySpawner: Main Camera is not assigned. " +
+                "Using transform position for spawning."
+            );
+
+            spawnXMin = transform.position.x;
+            spawnXMax = transform.position.x;
         }
 
         float randomX =
@@ -108,9 +138,10 @@ public class EnemySpawner : MonoBehaviour
             enemy.SetRoundManager(
                 roundManager
             );
+
             enemy.SetProjectilePool(
-    enemyProjectilePool
-);
+                enemyProjectilePool
+            );
         }
     }
 

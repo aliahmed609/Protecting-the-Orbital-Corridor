@@ -5,31 +5,75 @@ public class GunnerAim : MonoBehaviour
     [Header("References")]
     [SerializeField] private RoleManager roleManager;
     [SerializeField] private Camera mainCamera;
+    [SerializeField] private Transform reticle;
+
+    [Header("Aim")]
+    [SerializeField] private float worldSensitivity = 1f;
 
     private void Update()
     {
-        if (roleManager == null || mainCamera == null)
-            return;
-
-        // Check which player is currently the Gunner.
-        int gunnerPlayer = GetCurrentGunner();
-
-        if (gunnerPlayer == -1)
-            return;
-
-        // First try mobile aim.
-        if (MobileInputController.Instance != null &&
-            MobileInputController.Instance.GetAimInput(
-                gunnerPlayer,
-                out Vector2 mobilePosition))
+        if (roleManager == null ||
+            mainCamera == null ||
+            reticle == null)
         {
-            UpdateAimPosition(mobilePosition);
             return;
         }
 
-        // Keyboard/mouse development control.
-        UpdateMouseAim();
+        int gunnerPlayer = GetCurrentGunner();
+
+        if (gunnerPlayer == -1)
+        {
+            HideReticle();
+            return;
+        }
+
+        // ==================================================
+        // MOBILE AIM PAD
+        // ==================================================
+
+        if (MobileInputController.Instance == null)
+        {
+            HideReticle();
+            return;
+        }
+
+        bool aimActive =
+            MobileInputController.Instance.GetAimInput(
+                gunnerPlayer,
+                out _
+            );
+
+        // ==================================================
+        // AIM PAD ACTIVE
+        // ==================================================
+
+        if (aimActive)
+        {
+            reticle.gameObject.SetActive(true);
+
+            Vector2 aimDelta =
+                MobileInputController.Instance.GetAimDelta(
+                    gunnerPlayer
+                );
+
+            if (aimDelta != Vector2.zero)
+            {
+                MoveReticle(aimDelta);
+            }
+
+            return;
+        }
+
+        // ==================================================
+        // AIM PAD NOT ACTIVE
+        // ==================================================
+
+        HideReticle();
     }
+
+    // ==================================================
+    // CURRENT GUNNER
+    // ==================================================
 
     private int GetCurrentGunner()
     {
@@ -42,26 +86,63 @@ public class GunnerAim : MonoBehaviour
         return -1;
     }
 
-    private void UpdateMouseAim()
-    {
-        Vector3 mousePosition = Input.mousePosition;
+    // ==================================================
+    // MOVE RETICLE
+    // ==================================================
 
-        UpdateAimPosition(mousePosition);
-    }
-
-    private void UpdateAimPosition(Vector2 screenPosition)
+    private void MoveReticle(Vector2 screenDelta)
     {
-        Vector3 worldPosition =
+        float distance =
+            Mathf.Abs(
+                transform.position.z -
+                mainCamera.transform.position.z
+            );
+
+        Vector3 worldBefore =
             mainCamera.ScreenToWorldPoint(
                 new Vector3(
-                    screenPosition.x,
-                    screenPosition.y,
-                    -mainCamera.transform.position.z
+                    0f,
+                    0f,
+                    distance
                 )
             );
 
-        worldPosition.z = 0f;
+        Vector3 worldAfter =
+            mainCamera.ScreenToWorldPoint(
+                new Vector3(
+                    screenDelta.x,
+                    screenDelta.y,
+                    distance
+                )
+            );
 
-        transform.position = worldPosition;
+        Vector3 worldDelta =
+            (worldAfter - worldBefore) *
+            worldSensitivity;
+
+        worldDelta.z = 0f;
+
+        reticle.position += worldDelta;
+    }
+
+    // ==================================================
+    // HIDE RETICLE
+    // ==================================================
+
+    private void HideReticle()
+    {
+        if (reticle != null)
+        {
+            reticle.gameObject.SetActive(false);
+        }
+    }
+
+    // ==================================================
+    // RESET
+    // ==================================================
+
+    public void ResetAim()
+    {
+        HideReticle();
     }
 }

@@ -4,11 +4,12 @@ public class PlayerShipController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float leftLimit = -8f;
-    [SerializeField] private float rightLimit = 8f;
+    [SerializeField] private float horizontalPadding = 0.5f;
 
     [Header("References")]
     [SerializeField] private RoleManager roleManager;
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private PCInputController pcInputController;
 
     private float speedMultiplier = 1f;
 
@@ -17,7 +18,6 @@ public class PlayerShipController : MonoBehaviour
         if (roleManager == null)
             return;
 
-        // Find the player who is currently the Pilot.
         int pilotPlayer = GetCurrentPilot();
 
         if (pilotPlayer == -1)
@@ -31,19 +31,10 @@ public class PlayerShipController : MonoBehaviour
             speedMultiplier *
             Time.deltaTime;
 
-        transform.position += Vector3.right * movement;
+        transform.position +=
+            Vector3.right * movement;
 
-        float x = Mathf.Clamp(
-            transform.position.x,
-            leftLimit,
-            rightLimit
-        );
-
-        transform.position = new Vector3(
-            x,
-            transform.position.y,
-            transform.position.z
-        );
+        ClampToCameraBounds();
     }
 
     private int GetCurrentPilot()
@@ -59,23 +50,61 @@ public class PlayerShipController : MonoBehaviour
 
     private float GetMovementInput(int pilotPlayer)
     {
-        float keyboardInput = Input.GetAxisRaw("Horizontal");
-
-        float mobileInput = 0f;
+        // --------------------------------------------------
+        // MOBILE INPUT
+        // --------------------------------------------------
 
         if (MobileInputController.Instance != null)
         {
-            mobileInput =
+            float mobileInput =
                 MobileInputController.Instance.GetMovementInput(
                     pilotPlayer
                 );
+
+            if (Mathf.Abs(mobileInput) > 0f)
+                return mobileInput;
         }
 
-        // Mobile input takes priority when it is being used.
-        if (Mathf.Abs(mobileInput) > 0f)
-            return mobileInput;
+        // --------------------------------------------------
+        // PC INPUT
+        // --------------------------------------------------
 
-        return keyboardInput;
+        if (pcInputController != null)
+            return pcInputController.GetMovementInput();
+
+        // Fallback.
+        return Input.GetAxisRaw("Horizontal");
+    }
+
+    private void ClampToCameraBounds()
+    {
+        if (mainCamera == null)
+            return;
+
+        float cameraHalfWidth =
+            mainCamera.orthographicSize *
+            mainCamera.aspect;
+
+        float leftLimit =
+            mainCamera.transform.position.x -
+            cameraHalfWidth +
+            horizontalPadding;
+
+        float rightLimit =
+            mainCamera.transform.position.x +
+            cameraHalfWidth -
+            horizontalPadding;
+
+        Vector3 position = transform.position;
+
+        position.x =
+            Mathf.Clamp(
+                position.x,
+                leftLimit,
+                rightLimit
+            );
+
+        transform.position = position;
     }
 
     public void SetSpeedMultiplier(float multiplier)

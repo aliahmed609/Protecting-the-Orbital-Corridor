@@ -9,6 +9,7 @@ public class PlayerShield : MonoBehaviour
     [Header("References")]
     [SerializeField] private RoleManager roleManager;
     [SerializeField] private GameObject shieldVisual;
+    [SerializeField] private PCInputController pcInputController;
 
     private float shieldTimer;
     private float cooldownTimer;
@@ -61,15 +62,27 @@ public class PlayerShield : MonoBehaviour
 
     private bool GetShieldInput(int gunnerPlayer)
     {
-        // Mobile input
+        // --------------------------------------------------
+        // PC INPUT
+        // --------------------------------------------------
+
+        if (pcInputController != null)
+        {
+            if (pcInputController.GetShieldInput())
+                return true;
+        }
+
+        // --------------------------------------------------
+        // MOBILE INPUT
+        // --------------------------------------------------
+
         if (MobileInputController.Instance != null)
         {
             if (MobileInputController.Instance.GetShieldInput(gunnerPlayer))
                 return true;
         }
 
-        // Keyboard/mouse development input
-        return Input.GetMouseButtonDown(1);
+        return false;
     }
 
     private void ActivateShield()

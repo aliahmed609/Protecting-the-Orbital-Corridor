@@ -21,19 +21,45 @@ public class MobileButtonInput : MonoBehaviour,
     [Header("Action")]
     [SerializeField] private InputAction action;
 
+    private int activePointerId = -1;
+
     public void OnPointerDown(PointerEventData eventData)
     {
+        // This button is already owned by another touch.
+        if (activePointerId != -1)
+            return;
+
+        activePointerId = eventData.pointerId;
+
         SetInput(true);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (eventData.pointerId != activePointerId)
+            return;
+
         SetInput(false);
+
+        activePointerId = -1;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        // Do NOT release the button here.
+        //
+        // The touch remains assigned to the button
+        // until the finger is released or cancelled.
+    }
+
+    public void CancelTouch()
+    {
+        if (activePointerId == -1)
+            return;
+
         SetInput(false);
+
+        activePointerId = -1;
     }
 
     private void SetInput(bool pressed)
@@ -91,5 +117,10 @@ public class MobileButtonInput : MonoBehaviour,
                     break;
             }
         }
+    }
+
+    private void OnDisable()
+    {
+        CancelTouch();
     }
 }

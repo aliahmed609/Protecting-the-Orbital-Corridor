@@ -22,13 +22,19 @@ public class PlayerWeapon : MonoBehaviour
         if (gunnerPlayer == -1)
             return;
 
-        bool fireInput = GetFireInput(gunnerPlayer);
+        // Mobile Fire Button only.
+        if (MobileInputController.Instance == null)
+            return;
 
-        if (fireInput && Time.time >= nextFireTime)
-        {
-            Fire();
-            nextFireTime = Time.time + fireCooldown;
-        }
+        if (!MobileInputController.Instance.GetFireInput(gunnerPlayer))
+            return;
+
+        if (Time.time < nextFireTime)
+            return;
+
+        Fire(gunnerPlayer);
+
+        nextFireTime = Time.time + fireCooldown;
     }
 
     private int GetCurrentGunner()
@@ -42,21 +48,9 @@ public class PlayerWeapon : MonoBehaviour
         return -1;
     }
 
-    private bool GetFireInput(int gunnerPlayer)
+    private void Fire(int gunnerPlayer)
     {
-        if (MobileInputController.Instance != null)
-        {
-            if (MobileInputController.Instance.GetFireInput(gunnerPlayer))
-                return true;
-        }
-
-        // Development keyboard/mouse input.
-        return Input.GetMouseButton(0);
-    }
-
-    private void Fire()
-    {
-        if (laserPool == null || reticle == null)
+        if (laserPool == null)
             return;
 
         GameObject laser = laserPool.Get();
@@ -65,9 +59,45 @@ public class PlayerWeapon : MonoBehaviour
             return;
 
         laser.transform.position = transform.position;
-        laser.transform.rotation = Quaternion.identity;
 
-        Vector2 direction = reticle.position - transform.position;
+        bool aimActive =
+            MobileInputController.Instance.GetAimInput(
+                gunnerPlayer,
+                out _
+            );
+
+        Vector2 direction;
+
+        // AimPad + Fire → shoot toward reticle.
+        if (aimActive && reticle != null)
+        {
+            direction =
+                reticle.position -
+                transform.position;
+        }
+        else
+        {
+            // Fire only → shoot forward.
+            direction = transform.up;
+        }
+
+        if (direction.sqrMagnitude <= 0.001f)
+            direction = transform.up;
+
+        direction.Normalize();
+
+        float angle =
+            Mathf.Atan2(
+                direction.y,
+                direction.x
+            ) * Mathf.Rad2Deg - 90f;
+
+        laser.transform.rotation =
+            Quaternion.Euler(
+                0f,
+                0f,
+                angle
+            );
 
         PlayerLaser playerLaser =
             laser.GetComponent<PlayerLaser>();
